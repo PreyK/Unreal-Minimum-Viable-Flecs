@@ -1,5 +1,5 @@
 # Unreal Minimum Viable Flecs
-Minimal viable Flecs entity component system implementation in Unreal Engine.
+Minimum viable Flecs entity component system implementation in Unreal Engine.
 
 Intended as a super simple starting point / reference for using Flecs in Unreal.
 
