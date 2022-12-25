@@ -14,6 +14,9 @@ void UFlecsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	GetEcsWorld()->import<flecs::monitor>();
 	GetEcsWorld()->set<flecs::Rest>({});
 	
+	GetEcsWorld()->component<FlecsCorn>().member<float>("Current Growth");
+	GetEcsWorld()->component<FlecsISMIndex>().member<int>("ISM Render index");
+	
 	UE_LOG(LogTemp, Warning, TEXT("UUnrealFlecsSubsystem has started!"));
 	Super::Initialize(Collection);
 }
@@ -63,12 +66,15 @@ void UFlecsSubsystem::InitFlecs(UStaticMesh* InMesh)
 			FlecsConstants.CornRenderer->SetCustomData(index, fw[i].Growth);
 		}
 	});
-	
+
+	//TODO: Fix prefab logic
+	//https://ajmmertens.medium.com/deconstructing-flecs-prefabs-d604b5ba0fcc
 	auto CornPrefab = GetEcsWorld()->prefab()
 	.set<FlecsTransform>({FTransform(FVector::ZeroVector)})
 	.set<FlecsCorn>({0});
 	
 	GetEcsWorld()->entity().set<FlecsISMAdd>({0, CornPrefab, FTransform(FVector::ZeroVector)});
+	
 	
 	UE_LOG(LogTemp, Warning, TEXT("Flecs Corn system initialized444"));
 }
