@@ -21,7 +21,7 @@ public:
 	void Initialize(UStaticMesh* InMesh) const;
 	int32 GetInstanceCount() const;
 	void CreateOrExpandTransformArray();
-	int32 AddInstance(FVector location);
+	int32 AddInstance(FTransform inTransform);
 	int32 AddInstance();
 	void SetTransform(int32 instanceIndex, const FTransform& transform);
 	void RemoveInstance(int32 instanceIndex);

@@ -1,21 +1,23 @@
 #include "FlecsSubsystem.h"
-
-
 flecs::world* UFlecsSubsystem::GetEcsWorld() const{return ECSWorld;}
-
 void UFlecsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	OnTickDelegate = FTickerDelegate::CreateUObject(this, &UFlecsSubsystem::Tick);
 	OnTickHandle = FTicker::GetCoreTicker().AddTicker(OnTickDelegate);
-	ECSWorld = new flecs::world();
+	
+	//sets title in Flecs Explorer
+	char* argv[] = {"Minimum Viable Flecs"};
+	ECSWorld = new flecs::world(1, argv);
 	
 	//flecs explorer and monitor
-	//comment this out if you not using it, it has a performance overhead
+	//comment this out if you not using it, it has some performance overhead
+	//go to https://www.flecs.dev/explorer/ when the project is running to inspect active entities and values
 	GetEcsWorld()->import<flecs::monitor>();
 	GetEcsWorld()->set<flecs::Rest>({});
 	
+	//expose values with names to Flecs Explorer for easier inspection & debugging
 	GetEcsWorld()->component<FlecsCorn>().member<float>("Current Growth");
-	GetEcsWorld()->component<FlecsISMIndex>().member<int>("ISM Render index");
+	GetEcsWorld()->component<FlecsISMIndex>().member<int>("ISM Render index");	
 	
 	UE_LOG(LogTemp, Warning, TEXT("UUnrealFlecsSubsystem has started!"));
 	Super::Initialize(Collection);
@@ -23,60 +25,38 @@ void UFlecsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UFlecsSubsystem::InitFlecs(UStaticMesh* InMesh)
 {
-	FVector Location = FVector::ZeroVector;
-	FRotator Rotation = FRotator::ZeroRotator;
+	//Spawn an actor and add an Instanced Static Mesh component to it.
+	//This will render our entities.
 	FActorSpawnParameters SpawnInfo;
-	FlecsConstants.CornRenderer = Cast<AFlecsISMRenderer>(GetWorld()->SpawnActor(AFlecsISMRenderer::StaticClass(), &Location, &Rotation, SpawnInfo));
-	FlecsConstants.CornRenderer->Initialize(InMesh);
-
+	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	CornRenderer = Cast<UInstancedStaticMeshComponent>((GetWorld()->SpawnActor(AActor::StaticClass(), &FVector::ZeroVector, &FRotator::ZeroRotator, SpawnInfo))->AddComponentByClass(UInstancedStaticMeshComponent::StaticClass(), false, FTransform(FVector::ZeroVector), false));
+	CornRenderer->SetStaticMesh(InMesh);
+	CornRenderer->bUseDefaultCollision = false;
+	CornRenderer->SetGenerateOverlapEvents(false);
+	CornRenderer->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	CornRenderer->SetCanEverAffectNavigation(false);
+	CornRenderer->NumCustomDataFloats = 2;
 	
-	auto system_add_instance = GetEcsWorld()->system<FlecsISMAdd>()
-	.iter([](flecs::iter it, FlecsISMAdd *add) {
-		auto controller = FlecsConstants.CornRenderer;
-		auto ecs = it.world();
-		for (int i : it) {
-			auto instanceIndex = controller->AddInstance();
-			ecs.entity()
-			.is_a(add->Prefab)
-			.set<FlecsIsmRef>({controller})
-			.set<FlecsISMIndex>({instanceIndex})
-			.set<FlecsTransform>({add->Transform});
-			it.entity(i).destruct();
-		}
-		FlecsConstants.CornRenderer->CreateOrExpandTransformArray();
-	});
-	auto system_copy_instance_transforms = GetEcsWorld()->system<FlecsTransform, FlecsISMIndex, FlecsIsmRef>()
-	.iter([](flecs::iter it, FlecsTransform* ft, FlecsISMIndex* fi, FlecsIsmRef* fr) {
-		for (int i : it) {
-			auto index = fi[i].Value;
-			FlecsConstants.CornRenderer->SetTransform(index, ft->Value);
-		}
-	});
-	auto system_grow = GetEcsWorld()->system<FlecsCorn>()
+	//this system processes the growth of our entities
+	auto system_grow = GetEcsWorld()->system<FlecsCorn>("Grow System")
 	.iter([](flecs::iter it, FlecsCorn* fc) {
 		float GrowthRate = 20*it.delta_time();
 		for (int i : it) {
+			//if we haven't grown fully (100) then grow
 			fc[i].Growth+=(fc[i].Growth<100)*GrowthRate;
 		}
 	});
-	auto system_copy_growth = GetEcsWorld()->system<FlecsCorn, FlecsISMIndex>()
-	.iter([](flecs::iter it, FlecsCorn* fw, FlecsISMIndex* fi) {
+	
+	//this system sets the growth value of our entities in ISM so we can access it from materials.
+	auto system_copy_growth = GetEcsWorld()->system<FlecsCorn, FlecsISMIndex, FlecsIsmRef>("Grow Renderer System")
+	.iter([](flecs::iter it, FlecsCorn* fw, FlecsISMIndex* fi, FlecsIsmRef* fr) {
 		for (int i : it) {
 			auto index = fi[i].Value;
-			FlecsConstants.CornRenderer->SetCustomData(index, fw[i].Growth);
+			fr[i].Value->SetCustomDataValue(index, 0, fw[i].Growth, true);
 		}
 	});
-
-	//TODO: Fix prefab logic
-	//https://ajmmertens.medium.com/deconstructing-flecs-prefabs-d604b5ba0fcc
-	auto CornPrefab = GetEcsWorld()->prefab()
-	.set<FlecsTransform>({FTransform(FVector::ZeroVector)})
-	.set<FlecsCorn>({0});
 	
-	GetEcsWorld()->entity().set<FlecsISMAdd>({0, CornPrefab, FTransform(FVector::ZeroVector)});
-	
-	
-	UE_LOG(LogTemp, Warning, TEXT("Flecs Corn system initialized444"));
+	UE_LOG(LogTemp, Warning, TEXT("Flecs Corn system initialized!"));
 }
 
 void UFlecsSubsystem::Deinitialize()
@@ -87,17 +67,28 @@ void UFlecsSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UFlecsSubsystem::AddInstance(FVector location, FRotator rotation)
+FFlecsEntityHandle UFlecsSubsystem::SpawnCornEntity(FVector location, FRotator rotation)
 {
-	auto CornPrefab = GetEcsWorld()->prefab()
-	.set<FlecsTransform>({FTransform(rotation, location)})
+	auto IsmID = CornRenderer->AddInstance(FTransform(rotation, location));
+	auto entity = GetEcsWorld()->entity()
+	.set<FlecsIsmRef>({CornRenderer})
+	.set<FlecsISMIndex>({IsmID})
 	.set<FlecsCorn>({0});
-	GetEcsWorld()->entity().set<FlecsISMAdd>({0, CornPrefab, FTransform(rotation, location)});
+	return FFlecsEntityHandle{int(entity.id())};
 }
+
+void UFlecsSubsystem::SetEntityHighlight(FFlecsEntityHandle entityHandle, bool isHighlighted)
+{
+	int idx = GetEcsWorld()->entity(entityHandle.FlecsEntityId).get<FlecsISMIndex>()->Value;
+	CornRenderer->SetCustomDataValue(idx, 1, (float)isHighlighted, true);
+}
+float UFlecsSubsystem::GetEntityGrowthData(FFlecsEntityHandle entityHandle)
+{
+	return GetEcsWorld()->entity(entityHandle.FlecsEntityId).get<FlecsCorn>()->Growth;
+}
+
 bool UFlecsSubsystem::Tick(float DeltaTime)
 {
-	FlecsConstants.CornRenderer->BatchUpdateTransform();
-	
 	if(ECSWorld) ECSWorld->progress(DeltaTime);
 	return true;
 }

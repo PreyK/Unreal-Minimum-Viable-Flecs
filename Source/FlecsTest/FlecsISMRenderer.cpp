@@ -2,7 +2,7 @@
 void AFlecsISMRenderer::BeginPlay(){Super::BeginPlay();}
 void AFlecsISMRenderer::Tick(float DeltaTime){Super::Tick(DeltaTime);}
 int32 AFlecsISMRenderer::GetInstanceCount() const {return InstancedStaticMeshComponent->GetInstanceCount();}
-int32 AFlecsISMRenderer::AddInstance(){return AddInstance(FVector::ZeroVector);}
+int32 AFlecsISMRenderer::AddInstance(){return AddInstance( FTransform(FVector::ZeroVector));}
 void AFlecsISMRenderer::SetTransform(int32 instanceIndex, const FTransform& transform){transforms[instanceIndex] = transform;}
 
 
@@ -24,13 +24,12 @@ void AFlecsISMRenderer::Initialize(UStaticMesh* InMesh) const
 	InstancedStaticMeshComponent->NumCustomDataFloats = 1;
 }
 
-int32 AFlecsISMRenderer::AddInstance(FVector location)
+int32 AFlecsISMRenderer::AddInstance(FTransform inTransform)
 {
 	int32 instanceIndex;
 	if(indexPool.IsEmpty())
 	{
-		FTransform transform{location};
-		instanceIndex = InstancedStaticMeshComponent->AddInstance(transform);
+		instanceIndex = InstancedStaticMeshComponent->AddInstance(inTransform);
 	}
 	else
 	{
@@ -53,7 +52,8 @@ void AFlecsISMRenderer::SetCustomData(int32 instanceIndex, float data) const
 	
 	//Just hide an instance without actual removing
 	//Soon newly added instance replace the hidden one
-	InstancedStaticMeshComponent->SetCustomDataValue(instanceIndex, 0, data);
+	InstancedStaticMeshComponent->SetCustomDataValue(instanceIndex, 0, data, true);
+	
 }
 void AFlecsISMRenderer::CreateOrExpandTransformArray()
 {
@@ -68,8 +68,10 @@ void AFlecsISMRenderer::CreateOrExpandTransformArray()
 }
 void AFlecsISMRenderer::BatchUpdateTransform() const
 {
+	
 	if(transforms.Num() > 0)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Batch updating transforms!"));
 		InstancedStaticMeshComponent->BatchUpdateInstancesTransforms(0, transforms, true, true);
 	}
 }
