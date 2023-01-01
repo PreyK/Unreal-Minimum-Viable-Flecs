@@ -10,11 +10,13 @@ Intended as a super simple starting point / reference for using Flecs in Unreal.
 * ISM based entity rendering
 * Uses the Flecs c++ API
 * [Flecs Explorer](https://github.com/flecs-hub/explorer) integration
+* Basic c++ entity <--> blueprint communication example (get growth value & UI display, set entity highlight)
 
 Huge thans to [Red J](https://github.com/jtferson) for his [flecs space battle tutorial](https://jtferson.github.io/blog/quickstart_with_flecs_in_unreal_part_1/), check it out if you want a deeper dive
 ### Demo: Corn gun
 
 Shoot to spawn corn entities that grow.
+Look at the entity do display it's current growth value.
 
 ![alt text](demo.gif "Logo Title Text 1")
 
