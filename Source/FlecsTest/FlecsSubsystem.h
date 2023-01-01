@@ -1,42 +1,39 @@
 #pragma once
 #include "flecs.h"
 #include "CoreMinimal.h"
-#include "FlecsISMRenderer.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "FlecsSubsystem.generated.h"
-
 
 struct FlecsTransform
 {
 	FTransform Value;
 };
-
 struct FlecsISMIndex
 {
 	int Value;
 };
-
-struct FlecsISMAdd
-{
-	int32 Hash;
-	flecs::entity Prefab;
-	FTransform Transform;
-};
-
 struct FlecsIsmRef
 {
-	AFlecsISMRenderer* Value;
+	UInstancedStaticMeshComponent* Value;
 };
-
 struct FlecsCorn
 {
 	float Growth;
 };
-static struct 
-{  
-	AFlecsISMRenderer* CornRenderer;
-} FlecsConstants; 
 
+USTRUCT(BlueprintType)
+struct FFlecsEntityHandle
+{
+	GENERATED_USTRUCT_BODY()
+	FFlecsEntityHandle()  {}
+	FFlecsEntityHandle(int inId)
+	{
+		FlecsEntityId = inId;
+	}
+	UPROPERTY(BlueprintReadWrite)
+	int FlecsEntityId;
+};
 
 UCLASS()
 class FLECSTEST_API UFlecsSubsystem : public UGameInstanceSubsystem
@@ -47,12 +44,18 @@ public:
 	virtual void Deinitialize() override;
 	flecs::world* GetEcsWorld() const;
 	
-	UFUNCTION(BlueprintCallable, Category="FLECS")
-	void AddInstance(FVector location, FRotator rotation);
+	UPROPERTY(EditAnywhere)
+	UInstancedStaticMeshComponent* CornRenderer = nullptr;
 
 	
 	UFUNCTION(BlueprintCallable, Category="FLECS")
-	void InitFlecs(UStaticMesh* InMesh); 
+	void InitFlecs(UStaticMesh* InMesh);
+	UFUNCTION(BlueprintCallable, Category="FLECS")
+	FFlecsEntityHandle SpawnCornEntity(FVector location, FRotator rotation);
+	UFUNCTION(BlueprintCallable, Category="FLECS")
+	void SetEntityHighlight(FFlecsEntityHandle entityHandle, bool isHighlighted);
+	UFUNCTION(BlueprintCallable, Category="FLECS")
+	float GetEntityGrowthData(FFlecsEntityHandle entityHandle);
 
 protected:
 	FTickerDelegate OnTickDelegate;
