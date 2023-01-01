@@ -5,7 +5,7 @@ Intended as a super simple starting point / reference for using Flecs in Unreal.
 
 
 * Flecs v3.1.2 & Unreal Engine 5.1
-* Simple
+* Simple (~100 lines of c++)
 * It does a thing
 * ISM based entity rendering
 * Uses the Flecs c++ API
