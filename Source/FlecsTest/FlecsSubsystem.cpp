@@ -73,7 +73,9 @@ FFlecsEntityHandle UFlecsSubsystem::SpawnCornEntity(FVector location, FRotator r
 	auto entity = GetEcsWorld()->entity()
 	.set<FlecsIsmRef>({CornRenderer})
 	.set<FlecsISMIndex>({IsmID})
-	.set<FlecsCorn>({0});
+	.set<FlecsCorn>({0})
+	.child_of<Corns>()
+	.set_name(StringCast<ANSICHAR>(*FString::Printf(TEXT("Corn%d"), IsmID)).Get());
 	return FFlecsEntityHandle{int(entity.id())};
 }
 

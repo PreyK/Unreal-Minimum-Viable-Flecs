@@ -21,6 +21,7 @@ struct FlecsCorn
 {
 	float Growth;
 };
+struct Corns {};
 
 USTRUCT(BlueprintType)
 struct FFlecsEntityHandle
