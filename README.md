@@ -1,3 +1,9 @@
+# Blueprint based FLECS
+## Define all your ECS logic, systems and components in 100% blueprints without any C++
+## Will probably get it's own repo when it's usable
+## pretty much a work in progress
+
+
 # Unreal Minimum Viable Flecs
 Minimum viable Flecs entity component system implementation in Unreal Engine.
 
