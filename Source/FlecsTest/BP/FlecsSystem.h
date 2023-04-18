@@ -41,11 +41,11 @@ class FLECSTEST_API UFlecsSystem : public UObject
 public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnExecute(UFlecsEntity* CurrentEntity);
-
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnInitialize();
-
-	
 	UFUNCTION(BlueprintCallable)
 	void RegisterSystemComponents(TArray<TSubclassOf<UFlecsComponent>> components);
+
+	TArray<TSubclassOf<UFlecsComponent>> SystemComponents;
+	
 };

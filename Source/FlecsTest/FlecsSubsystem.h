@@ -58,6 +58,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="FLECS")
 	float GetEntityGrowthData(FFlecsEntityHandle entityHandle);
 
+
+	UFUNCTION(BlueprintCallable)
+	void InitializeSystem(TSubclassOf<UFlecsSystem> system);
+	
 protected:
 	FTickerDelegate OnTickDelegate;
 	FDelegateHandle OnTickHandle;

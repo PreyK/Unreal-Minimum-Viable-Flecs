@@ -89,6 +89,25 @@ float UFlecsSubsystem::GetEntityGrowthData(FFlecsEntityHandle entityHandle)
 	return GetEcsWorld()->entity(entityHandle.FlecsEntityId).get<FlecsCorn>()->Growth;
 }
 
+void UFlecsSubsystem::InitializeSystem(TSubclassOf<UFlecsSystem> system)
+{
+	//make new system
+	//register componets
+	//register callbacks
+	
+
+	GetEcsWorld()->system<FlecsCorn>("BP DEFINED NAME")
+	.iter([](flecs::iter it, FlecsCorn* fc) {
+		float GrowthRate = 20*it.delta_time();
+		for (int i : it) {
+			//if we haven't grown fully (100) then grow
+			fc[i].Growth+=(fc[i].Growth<100)*GrowthRate;
+		}
+	});
+
+	
+}
+
 bool UFlecsSubsystem::Tick(float DeltaTime)
 {
 	if(ECSWorld) ECSWorld->progress(DeltaTime);
