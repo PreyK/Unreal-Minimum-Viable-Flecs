@@ -1,7 +1,9 @@
 # Blueprint based FLECS
-## Define all your ECS logic, systems and components in 100% blueprints without any C++
+![image](goals.png)
+### Define all your ECS logic, systems and components in 100% blueprints without any C++
 ## Will probably get it's own repo when it's usable
 ## pretty much a work in progress
+## not in a usable state yet
 
 
 # Unreal Minimum Viable Flecs
