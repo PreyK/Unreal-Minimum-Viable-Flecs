@@ -3,6 +3,8 @@
 
 .idea/
 
+#Rider for UE/RiderLink for c++
+Plugins/Developer/RiderLink
 
 # Compiled Object files
 *.slo
