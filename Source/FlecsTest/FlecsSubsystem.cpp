@@ -3,7 +3,7 @@ flecs::world* UFlecsSubsystem::GetEcsWorld() const{return ECSWorld;}
 void UFlecsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	OnTickDelegate = FTickerDelegate::CreateUObject(this, &UFlecsSubsystem::Tick);
-	OnTickHandle = FTicker::GetCoreTicker().AddTicker(OnTickDelegate);
+	OnTickHandle = FTSTicker::GetCoreTicker().AddTicker(OnTickDelegate);
 	
 	//sets title in Flecs Explorer
 	char* argv[] = {"Minimum Viable Flecs"};
@@ -61,7 +61,7 @@ void UFlecsSubsystem::InitFlecs(UStaticMesh* InMesh)
 
 void UFlecsSubsystem::Deinitialize()
 {
-	FTicker::GetCoreTicker().RemoveTicker(OnTickHandle);
+	FTSTicker::GetCoreTicker().RemoveTicker(OnTickHandle);
 	if(!ECSWorld) delete(ECSWorld);
 	UE_LOG(LogTemp, Warning, TEXT("UUnrealFlecsSubsystem has shut down!"));
 	Super::Deinitialize();

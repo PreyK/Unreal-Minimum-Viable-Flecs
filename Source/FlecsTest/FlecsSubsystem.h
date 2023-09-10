@@ -60,7 +60,7 @@ public:
 
 protected:
 	FTickerDelegate OnTickDelegate;
-	FDelegateHandle OnTickHandle;
+	FTSTicker::FDelegateHandle OnTickHandle;
 	flecs::world* ECSWorld = nullptr;
 private:
 	bool Tick(float DeltaTime);
