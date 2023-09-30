@@ -66,6 +66,7 @@ void UFlecsSubsystem::Deinitialize()
 	if (ECSWorld)
 	{
 		delete ECSWorld;
+		ECSWorld = nullptr;
 	}
 	
 	UE_LOG(LogTemp, Warning, TEXT("UUnrealFlecsSubsystem has shut down!"));
