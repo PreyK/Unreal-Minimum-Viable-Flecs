@@ -62,7 +62,13 @@ void UFlecsSubsystem::InitFlecs(UStaticMesh* InMesh)
 void UFlecsSubsystem::Deinitialize()
 {
 	FTSTicker::GetCoreTicker().RemoveTicker(OnTickHandle);
-	if(!ECSWorld) delete(ECSWorld);
+	
+	if (ECSWorld)
+	{
+		delete ECSWorld;
+		ECSWorld = nullptr;
+	}
+	
 	UE_LOG(LogTemp, Warning, TEXT("UUnrealFlecsSubsystem has shut down!"));
 	Super::Deinitialize();
 }
