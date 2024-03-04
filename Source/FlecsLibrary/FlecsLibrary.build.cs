@@ -6,20 +6,13 @@ public class FlecsLibrary : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] {
-			"Core",
-			"CoreUObject",
-			"Engine",
-			"FlecsTest",
-		});
+		PublicDependencyModuleNames.AddRange(new string[] { "Core" });
 
 		//The path for the header files
 		PublicIncludePaths.AddRange(new string[] {"FlecsLibrary/Public"});
 		//The path for the source files
 		PrivateIncludePaths.AddRange(new string[] {"FlecsLibrary/Private"});
 		//UBT has no idea what 'flecs_EXPORTS' is
-		//AppendStringToPublicDefinition("flecs_EXPORTS", "0");
-		AppendStringToPublicDefinition("HAVE_EXECINFO", "0");
-		
+		AppendStringToPublicDefinition("flecs_EXPORTS", "0");
 	}
 }
