@@ -8,7 +8,7 @@ public class FlecsTestEditorTarget : TargetRules
 	public FlecsTestEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
+		DefaultBuildSettings = BuildSettingsVersion.V5;
 
 		ExtraModuleNames.AddRange( new string[] { "FlecsTest", "FlecsLibrary" } );
 	}
