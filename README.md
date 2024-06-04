@@ -4,7 +4,7 @@ Minimum viable Flecs entity component system implementation in Unreal Engine.
 Intended as a super simple starting point / reference for using Flecs in Unreal.
 
 
-* Flecs v3.2.7 & Unreal Engine 5.3
+* Flecs v3.2.12 & Unreal Engine 5.4
 * Simple
 * It does a thing
 * ISM based entity rendering
