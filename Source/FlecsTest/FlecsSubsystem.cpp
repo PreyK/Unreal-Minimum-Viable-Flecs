@@ -6,8 +6,8 @@ void UFlecsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	OnTickHandle = FTSTicker::GetCoreTicker().AddTicker(OnTickDelegate);
 	
 	//sets title in Flecs Explorer
-	char	flecsName[]	= {"Minimum Viable Flecs"};
-	char*	argv		= flecsName;
+  char name[] = { "Minimum Viable Flecs" };
+	char* argv = name;
 	ECSWorld = new flecs::world(1, &argv);
 	
 	//flecs explorer and monitor
