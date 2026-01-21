@@ -13,7 +13,9 @@ public class FlecsLibrary : ModuleRules
 		//The path for the source files
 		PrivateIncludePaths.AddRange(new string[] {"FlecsLibrary/Private"});
 
-		if (Target.Platform != UnrealTargetPlatform.Win64)
-			AppendStringToPublicDefinition("flecs_EXPORTS", "0");
+		if (Target.Platform != UnrealTargetPlatform.Win64) AppendStringToPublicDefinition("flecs_EXPORTS", "0");
+			
+		PrivateDefinitions.Add("flecs_EXPORTS");
+
 	}
 }

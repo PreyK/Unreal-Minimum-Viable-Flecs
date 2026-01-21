@@ -33,7 +33,7 @@ struct FFlecsEntityHandle
 		FlecsEntityId = inId;
 	}
 	UPROPERTY(BlueprintReadWrite)
-	int FlecsEntityId;
+	int FlecsEntityId = 0;
 };
 
 UCLASS()
@@ -57,6 +57,10 @@ public:
 	void SetEntityHighlight(FFlecsEntityHandle entityHandle, bool isHighlighted);
 	UFUNCTION(BlueprintCallable, Category="FLECS")
 	float GetEntityGrowthData(FFlecsEntityHandle entityHandle);
+
+	/** Execute a Flecs query using the Flecs Query Language */
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	TArray<int64> ExecuteQuery(const FString& QueryString);
 
 protected:
 	FTickerDelegate OnTickDelegate;

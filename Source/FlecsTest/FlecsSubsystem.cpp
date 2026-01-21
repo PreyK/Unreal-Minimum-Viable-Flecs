@@ -1,4 +1,5 @@
 #include "FlecsSubsystem.h"
+
 flecs::world* UFlecsSubsystem::GetEcsWorld() const{return ECSWorld;}
 void UFlecsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -13,7 +14,7 @@ void UFlecsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	//flecs explorer and monitor
 	//comment this out if you not using it, it has some performance overhead
 	//go to https://www.flecs.dev/explorer/ when the project is running to inspect active entities and values
-	GetEcsWorld()->import<flecs::monitor>();
+	GetEcsWorld()->import<flecs::stats>();
 	GetEcsWorld()->set<flecs::Rest>({});
 	
 	//expose values with names to Flecs Explorer for easier inspection & debugging
@@ -39,21 +40,34 @@ void UFlecsSubsystem::InitFlecs(UStaticMesh* InMesh)
 	CornRenderer->NumCustomDataFloats = 2;
 	
 	//this system processes the growth of our entities
-	auto system_grow = GetEcsWorld()->system<FlecsCorn>("Grow System")
-	.iter([](flecs::iter it, FlecsCorn* fc) {
-		float GrowthRate = 20*it.delta_time();
-		for (int i : it) {
-			//if we haven't grown fully (100) then grow
-			fc[i].Growth+=(fc[i].Growth<100)*GrowthRate;
+	GetEcsWorld()->system<FlecsCorn>("Grow System")
+		.run([](flecs::iter it) {
+		while (it.next())
+		{
+			auto fc = it.field<FlecsCorn>(0);
+
+			float GrowthRate = 20 * it.delta_time();
+			for (int i : it) {
+				//if we haven't grown fully (100) then grow
+				fc[i].Growth += (fc[i].Growth < 100) * GrowthRate;
+			}
 		}
-	});
+			});
+
 	
 	//this system sets the growth value of our entities in ISM so we can access it from materials.
-	auto system_copy_growth = GetEcsWorld()->system<FlecsCorn, FlecsISMIndex, FlecsIsmRef>("Grow Renderer System")
-	.iter([](flecs::iter it, FlecsCorn* fw, FlecsISMIndex* fi, FlecsIsmRef* fr) {
-		for (int i : it) {
-			auto index = fi[i].Value;
-			fr[i].Value->SetCustomDataValue(index, 0, fw[i].Growth, true);
+	GetEcsWorld()->system<FlecsCorn, FlecsISMIndex, FlecsIsmRef>("Grow Renderer System")
+	.run([](flecs::iter it)-> void {
+		while(it.next())
+		{
+			auto fw = it.field<FlecsCorn>(0);
+			auto fi = it.field<FlecsISMIndex>(1);
+			auto fr = it.field<FlecsIsmRef>(2);
+			for (int i : it) {
+				auto index = fi[i].Value;
+				fr[i].Value->SetCustomDataValue(index, 0, fw[i].Growth, true);
+			}
+			
 		}
 	});
 	
@@ -83,21 +97,55 @@ FFlecsEntityHandle UFlecsSubsystem::SpawnCornEntity(FVector location, FRotator r
 	.set<FlecsCorn>({0})
 	.child_of<Corns>()
 	.set_name(StringCast<ANSICHAR>(*FString::Printf(TEXT("Corn%d"), IsmID)).Get());
+	UE_LOG(LogTemp, Warning, TEXT("Corn Spawned!"));
 	return FFlecsEntityHandle{int(entity.id())};
 }
 
 void UFlecsSubsystem::SetEntityHighlight(FFlecsEntityHandle entityHandle, bool isHighlighted)
 {
-	int idx = GetEcsWorld()->entity(entityHandle.FlecsEntityId).get<FlecsISMIndex>()->Value;
+	int idx = GetEcsWorld()->entity(entityHandle.FlecsEntityId).get<FlecsISMIndex>().Value;
 	CornRenderer->SetCustomDataValue(idx, 1, (float)isHighlighted, true);
 }
 float UFlecsSubsystem::GetEntityGrowthData(FFlecsEntityHandle entityHandle)
 {
-	return GetEcsWorld()->entity(entityHandle.FlecsEntityId).get<FlecsCorn>()->Growth;
+	return GetEcsWorld()->entity(entityHandle.FlecsEntityId).get<FlecsCorn>().Growth;
 }
 
 bool UFlecsSubsystem::Tick(float DeltaTime)
 {
 	if(ECSWorld) ECSWorld->progress(DeltaTime);
 	return true;
+}
+
+TArray<int64> UFlecsSubsystem::ExecuteQuery(const FString& QueryString)
+{
+	TArray<int64> EntityIDs;
+
+	if (!GetEcsWorld())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Flecs world not initialized!"));
+		return EntityIDs;
+	}
+
+	// Create a new query
+	ecs_query_desc_t QueryDesc = {};
+	QueryDesc.expr = TCHAR_TO_UTF8(*QueryString); // Define the query string
+
+	ecs_query_t* Query = ecs_query_init(GetEcsWorld()->c_ptr(), &QueryDesc);
+
+	// Execute the query and collect entity IDs
+	ecs_iter_t It = ecs_query_iter(GetEcsWorld()->c_ptr(), Query);
+	while (ecs_query_next(&It))
+	{
+		for (int32 i = 0; i < It.count; i++)
+		{
+			ecs_entity_t Entity = It.entities[i];
+			EntityIDs.Add(static_cast<int64>(Entity));
+		}
+	}
+
+	FString log = TEXT("Failed to create query with expr.") + FString::FromInt(It.count);
+	UE_LOG(LogTemp, Log, TEXT("%s"), *log);
+
+	return EntityIDs;
 }
